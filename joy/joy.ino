@@ -19,7 +19,16 @@ bool radioNumber = 1;
 RF24 radio(7,8);
 /**********************************************************/
 
+/*
+Includiamo la libreria che permette l'utilizzo di uno schermo lcd 2x16 del tipo
+Hitachi HD44780
+*/
 
+// include the library code:
+#include <LiquidCrystal.h>
+
+// initialize the library with the numbers of the interface pins
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 
 /**
 * Create a data structure for transmitting and receiving data
@@ -33,6 +42,8 @@ int tap = 3;  // variable to store the value coming from the sensor
 
 char color;
 
+int oldX=0, oldY=0;
+
 struct dataStruct{
   int asseX;
   int asseY;
@@ -41,6 +52,9 @@ struct dataStruct{
 }myData;
 
 void setup() {
+  
+    // set up the LCD's number of columns and rows: 
+  lcd.begin(16, 2);
 
   pinMode(X, INPUT);
   pinMode(Y, INPUT);
@@ -68,6 +82,10 @@ void setup() {
 //  myData.value = 1.22;
   // Start the radio listening for data
   radio.startListening();
+  
+  //uso queta variabile per mandare a monitor seriale i dati ogni TOT secondi e non  ad ogni ciclo
+         
+
 }
 
 
@@ -75,6 +93,10 @@ void setup() {
 
 void loop() {
   
+  
+  // set the cursor to column 0, line 1
+  // (note: line 1 is the second row, since counting begins with 0):
+  lcd.setCursor(0, 1);
   
 /****************** Ping Out Role ***************************/  
 
@@ -89,9 +111,24 @@ void loop() {
  //   myData.clic= digitalRead(tap);
     myData.temp = micros();
 
-    Serial.println(myData.asseX);
-    Serial.println(myData.asseY);
-    Serial.println(myData.temp);
+        // set the cursor to column 0, line 2
+        // (note: line 1 is the second row, since counting begins with 0):
+    lcd.setCursor(0, 2);      
+         
+    lcd.print(myData.asseX);
+    lcd.print(" - ");   
+    lcd.print(myData.asseY);
+      
+    if (abs(abs(oldX)-abs(myData.asseX)>5 )){            
+        
+          Serial.println(myData.asseX); 
+          oldX = myData.asseX;
+      }      
+      
+     if (abs(abs(oldY)-abs(myData.asseY)>5 )){        
+         Serial.println(myData.asseY);
+         oldY = myData.asseY;
+     }
      
      if (!radio.write( &myData, sizeof(myData) )){
        Serial.println(F("failed"));
@@ -115,29 +152,43 @@ void loop() {
                                                                 // Grab the response, compare, and send to debugging spew
         radio.read( &color, sizeof(color) );
         unsigned long time = micros();
+  
+  
+                Serial.print("identificato il colore ");
+              
+                switch (color){
+                  case 'R':
+                    Serial.println("Rosso");
+                    // set the cursor to column 0, line 1
+                    // (note: line 1 is the second row, since counting begins with 0):
+                    lcd.setCursor(0, 1);      
+                    lcd.print("Rosso");
+                    break;
+                  case 'G':
+                    // set the cursor to column 0, line 1
+                    // (note: line 1 is the second row, since counting begins with 0):
+                    lcd.setCursor(0, 1);      
+                    lcd.print("Verde");
+                    Serial.println("Verde");
+                    break;
+                  case 'B':
+                    // set the cursor to column 0, line 1
+                    // (note: line 1 is the second row, since counting begins with 0):
+                    lcd.setCursor(0, 1);      
+                    lcd.print("Blue");
+                    Serial.println("Blue");
+                    break;        
+                }
 
-        Serial.print("identificato il colore ");
-        switch (color){
-          case 'R':
-            Serial.println("Rosso");
-            break;
-          case 'G':
-            Serial.println("Verde");
-            break;
-          case 'B':
-            Serial.println("Blue");
-            break;        
-        }
-        Serial.println(color);          
         // Spew it
-        Serial.print(F("Sent "));
-        Serial.print(time);
-        Serial.print(F(", Got response "));
-        Serial.print(myData.temp);
-        Serial.print(F(", Round-trip delay "));
-        Serial.print(time-myData.temp);
-        Serial.print(F(" microseconds Value "));
-        Serial.println(myData.temp);
+//        Serial.print(F("Sent "));
+//        Serial.print(time);
+//        Serial.print(F(", Got response "));
+//        Serial.print(myData.temp);
+//        Serial.print(F(", Round-trip delay "));
+//        Serial.print(time-myData.temp);
+//        Serial.print(F(" microseconds Value "));
+//        Serial.println(myData.temp);
     }
 
     // Try again 1s later

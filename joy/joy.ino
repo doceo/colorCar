@@ -78,13 +78,7 @@ void setup() {
     radio.openWritingPipe(addresses[0]);
     radio.openReadingPipe(1,addresses[1]);
   }
-  
-//  myData.value = 1.22;
-  // Start the radio listening for data
-  radio.startListening();
-  
-  //uso queta variabile per mandare a monitor seriale i dati ogni TOT secondi e non  ad ogni ciclo
-         
+     
 
 }
 
@@ -92,16 +86,10 @@ void setup() {
 
 
 void loop() {
-  
-  
-  // set the cursor to column 0, line 1
-  // (note: line 1 is the second row, since counting begins with 0):
-  lcd.setCursor(0, 1);
-  
-/****************** Ping Out Role ***************************/  
-
+ 
+      // Start the radio listening for data
+    radio.startListening();   
     
-    radio.stopListening();                                    // First, stop listening so we can talk.
     
     
     Serial.println(F("Now sending"));
@@ -113,21 +101,28 @@ void loop() {
 
         // set the cursor to column 0, line 2
         // (note: line 1 is the second row, since counting begins with 0):
-    lcd.setCursor(0, 2);      
-         
-    lcd.print(myData.asseX);
-    lcd.print(" - ");   
+
     lcd.print(myData.asseY);
       
     if (abs(abs(oldX)-abs(myData.asseX)>5 )){            
         
           Serial.println(myData.asseX); 
-          oldX = myData.asseX;
+
+          lcd.setCursor(0, 2);     
+          lcd.print("X: " + myData.asseX);
+          
+          oldX = myData.asseX;    
+
       }      
       
      if (abs(abs(oldY)-abs(myData.asseY)>5 )){        
          Serial.println(myData.asseY);
-         oldY = myData.asseY;
+          
+          //spostiamo il primo carattere alla colonna nove
+          lcd.setCursor(9, 2);     
+          lcd.print("Y " + myData.asseY);
+         
+          oldY = myData.asseY;
      }
      
      if (!radio.write( &myData, sizeof(myData) )){
@@ -152,32 +147,37 @@ void loop() {
                                                                 // Grab the response, compare, and send to debugging spew
         radio.read( &color, sizeof(color) );
         unsigned long time = micros();
-  
-  
-                Serial.print("identificato il colore ");
-              
+ 
+                lcd.setCursor(0, 1);
                 switch (color){
+
                   case 'R':
+                    Serial.print("identificato il colore ");
                     Serial.println("Rosso");
                     // set the cursor to column 0, line 1
                     // (note: line 1 is the second row, since counting begins with 0):
-                    lcd.setCursor(0, 1);      
+                        
                     lcd.print("Rosso");
                     break;
                   case 'G':
                     // set the cursor to column 0, line 1
                     // (note: line 1 is the second row, since counting begins with 0):
-                    lcd.setCursor(0, 1);      
+                    
                     lcd.print("Verde");
+                    Serial.print("identificato il colore ");
                     Serial.println("Verde");
                     break;
                   case 'B':
                     // set the cursor to column 0, line 1
                     // (note: line 1 is the second row, since counting begins with 0):
-                    lcd.setCursor(0, 1);      
+                    
                     lcd.print("Blue");
+                    Serial.print("identificato il colore ");
                     Serial.println("Blue");
-                    break;        
+                    break;       
+
+                  default:
+                    lcd.print("Non identificato");  
                 }
 
         // Spew it
@@ -194,6 +194,6 @@ void loop() {
     // Try again 1s later
 //    delay(1000);
 
-
+    radio.stopListening();      
 
 } // Loop
